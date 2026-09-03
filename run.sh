@@ -5,18 +5,14 @@ export RUST_LOG=info
 export WOLT_TRACKING_URL=https://consumer-api.wolt.com/order-tracking-api/v1/details/tracking-code/track/
 export FOOD_SERVER_URL="0.0.0.0:1337"
 
-# Function to check Wi-Fi connection
-check_wifi() {
-    if ! iwconfig wlan0 | grep -q "ESSID:off/any"; then
-        return 0  # Wi-Fi is connected
-    else
-        return 1  # Wi-Fi is not connected
-    fi
+# Function to check network connection, regardless of interface (Wi-Fi or Ethernet)
+check_network() {
+    ping -c 1 -W 2 8.8.8.8 > /dev/null 2>&1
 }
 
-# Wait for Wi-Fi connection
-while ! check_wifi; do
-    echo "Waiting for Wi-Fi connection..."
+# Wait for network connection
+while ! check_network; do
+    echo "Waiting for network connection..."
     sleep 5
 done
 
