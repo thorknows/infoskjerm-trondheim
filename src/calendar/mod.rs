@@ -1,4 +1,5 @@
 mod calendar_models;
+mod ics;
 mod server;
 
 mod storage;
@@ -6,6 +7,7 @@ mod storage;
 use crate::ui::*;
 
 use crate::calendar::calendar_models::CalendarEvent;
+use crate::calendar::ics::fetch_ics_events;
 use crate::calendar::storage::get_calendar;
 use chrono::{Local, Locale, TimeZone};
 use slint::{VecModel, Weak};
@@ -14,6 +16,10 @@ use tokio::runtime::Runtime;
 
 fn get_server_url() -> String {
     env::var("CALENDAR_SERVER_URL").unwrap_or(String::from("http://localhost:1338/"))
+}
+
+fn get_ics_url() -> Option<String> {
+    env::var("CALENDAR_ICS_URL").ok()
 }
 
 pub fn setup(window: &MainWindow) {
@@ -36,7 +42,13 @@ pub fn setup(window: &MainWindow) {
 async fn calendar_worker_loop(window: Weak<MainWindow>) {
     loop {
         let current_calendar = get_calendar().await;
-        display_calendar(&window, current_calendar.events).await;
+        let mut events = current_calendar.events;
+
+        if let Some(ics_url) = get_ics_url() {
+            events.extend(fetch_ics_events(&ics_url).await);
+        }
+
+        display_calendar(&window, events).await;
         tokio::time::sleep(std::time::Duration::from_secs(60)).await;
     }
 }
