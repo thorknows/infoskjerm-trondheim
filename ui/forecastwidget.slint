@@ -6,6 +6,11 @@ export struct Forecast {
     precipitation: string,
 }
 
+export struct DayForecast {
+    heading: string,
+    forecast: Forecast,
+}
+
 component ForecastCell {
     in property <Forecast> forecast;
     in property <string> heading;
@@ -46,27 +51,30 @@ component ForecastCell {
 }
 
 export component ForecastWidget {
-    in property <Forecast> now: {
-        temp: "-1",
-        precipitation: "0",
-        icon: @image-url("../img/weather/partlycloudy_day.png")
-    };
-    in property <Forecast> tomorrow: {
-        temp: "10",
-        precipitation: "2",
-        icon: @image-url("../img/weather/partlycloudy_day.png")
-    };
+    in property <[DayForecast]> forecasts: [
+        {
+            heading: "Nå",
+            forecast: {
+                temp: "-1",
+                precipitation: "0",
+                icon: @image-url("../img/weather/partlycloudy_day.png")
+            },
+        },
+        {
+            heading: "I morgen",
+            forecast: {
+                temp: "10",
+                precipitation: "2",
+                icon: @image-url("../img/weather/partlycloudy_day.png")
+            },
+        }
+    ];
 
     HorizontalBox {
         width: 100%;
-        ForecastCell {
-            forecast: now;
-            heading: "Nå";
-        }
-
-        ForecastCell {
-            forecast: tomorrow;
-            heading: "I morgen";
+        for day in forecasts: ForecastCell {
+            forecast: day.forecast;
+            heading: day.heading;
         }
     }
 }

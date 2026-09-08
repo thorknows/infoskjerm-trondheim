@@ -1,7 +1,7 @@
 import { Button, VerticalBox } from "std-widgets.slint";
 
 import { GridBox , HorizontalBox} from "std-widgets.slint";
-import { ForecastWidget, Forecast } from "forecastwidget.slint";
+import { ForecastWidget, DayForecast } from "forecastwidget.slint";
 import { FoodTrackerWidget, FoodTracking} from "foodtrackerwidget.slint";
 import { StopPlaceData, TransportationWidget } from "transportation.slint";
 import { CalendarWidget, Event } from "calendarwidget.slint";
@@ -13,16 +13,16 @@ import { SeasonEffects, Snowflake, SpookyFace, Bat } from "seasons.slint";
 export component MainWindow inherits Window {
     in property <string> time: "12:34";
     in property <string> date: "Mandag 5. august";
-    in property <Forecast> nowForecast: {
-        temp: "-1",
-        precipitation: "2",
-        icon: @image-url("../img/weather/partlycloudy_day.png")
-    };
-    in property <Forecast> tomorrowForecast: {
-        temp: "-1",
-        precipitation: "2",
-        icon: @image-url("../img/weather/partlycloudy_day.png")
-    };
+    in property <[DayForecast]> forecasts: [
+        {
+            heading: "Nå",
+            forecast: {
+                temp: "-1",
+                precipitation: "2",
+                icon: @image-url("../img/weather/partlycloudy_day.png")
+            },
+        }
+    ];
     in property <FoodTracking> foodTracking: {
         active: false,
         resturant_name: "McDonalds",
@@ -99,8 +99,7 @@ export component MainWindow inherits Window {
             }
 
             ForecastWidget {
-                now: nowForecast;
-                tomorrow: tomorrowForecast;
+                forecasts: forecasts;
             }
 
             if foodTracking.active: FoodTrackerWidget {

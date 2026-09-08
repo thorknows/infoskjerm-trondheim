@@ -1,5 +1,7 @@
+use chrono::{Local, Locale, Timelike};
 use log::{error, info};
-use slint::{Image, Rgba8Pixel, SharedPixelBuffer, Weak};
+use slint::{Image, Rgba8Pixel, SharedPixelBuffer, VecModel, Weak};
+use std::rc::Rc;
 use std::string::ToString;
 use std::thread;
 
@@ -12,6 +14,7 @@ mod forecast_models;
 const API_URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=63.2549&lon=10.2342";
 const USER_AGENT_STR: &str = "Knowit Infoskjerm - github.com/Knowit-Objectnet/infoskjerm-trondheim";
+const FUTURE_DAYS: i64 = 4;
 
 fn get_empty_forecast() -> ForecastModel {
     ForecastModel {
@@ -33,22 +36,54 @@ pub fn setup(window: &MainWindow) {
 async fn weather_worker_loop(window: Weak<MainWindow>) {
     loop {
         let response = get_forecast_data().await;
-        if response == None {
-            display_forecast(&window, get_empty_forecast(), get_empty_forecast());
-        } else {
-            let data = response.unwrap();
-            let now = get_forecast_now(&data);
-            let tomorrow = get_forecast_tomorrow(&data);
-            display_forecast(&window, now, tomorrow);
-        }
+        let days = match response {
+            None => (0..=FUTURE_DAYS)
+                .map(|offset| (heading_for_offset(offset), get_empty_forecast()))
+                .collect::<Vec<_>>(),
+            Some(data) => build_forecast_days(&data),
+        };
+        display_forecast(&window, days);
         tokio::time::sleep(std::time::Duration::from_secs(60 * 15)).await;
     }
 }
 
-fn display_forecast(window: &Weak<MainWindow>, now: ForecastModel, tomorrow: ForecastModel) {
-    let _ = window.upgrade_in_event_loop(|window: MainWindow| {
-        window.set_nowForecast(now.into());
-        window.set_tomorrowForecast(tomorrow.into());
+fn heading_for_offset(offset: i64) -> String {
+    match offset {
+        0 => "Nå".to_string(),
+        1 => "I morgen".to_string(),
+        _ => {
+            let date = Local::now().date_naive() + chrono::Duration::days(offset);
+            let weekday = date.format_localized("%A", Locale::nb_NO).to_string();
+            let mut chars = weekday.chars();
+            match chars.next() {
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                None => weekday,
+            }
+        }
+    }
+}
+
+fn build_forecast_days(data: &ForecastRaw) -> Vec<(String, ForecastModel)> {
+    let mut days = vec![(heading_for_offset(0), get_forecast_now(data))];
+
+    for offset in 1..=FUTURE_DAYS {
+        let forecast = get_forecast_for_day_offset(data, offset).unwrap_or_else(get_empty_forecast);
+        days.push((heading_for_offset(offset), forecast));
+    }
+
+    days
+}
+
+fn display_forecast(window: &Weak<MainWindow>, days: Vec<(String, ForecastModel)>) {
+    let _ = window.upgrade_in_event_loop(move |window: MainWindow| {
+        let model: VecModel<DayForecast> = VecModel::default();
+        for (heading, forecast) in days {
+            model.push(DayForecast {
+                heading: heading.into(),
+                forecast: forecast.into(),
+            });
+        }
+        window.set_forecasts(Rc::new(model).into());
     });
 }
 
@@ -109,36 +144,36 @@ fn get_forecast_now(data: &ForecastRaw) -> ForecastModel {
     }
 }
 
-fn get_forecast_tomorrow(data: &ForecastRaw) -> ForecastModel {
-    let tomorrow = (chrono::Local::now().date_naive() + chrono::Duration::try_days(1).unwrap())
-        .and_hms_opt(8, 0, 0)
-        .unwrap();
+// MET only provides hourly resolution for the near term; forecasts several days out are
+// only available every 6 hours, so we pick the entry closest to midday on the target date
+// rather than requiring an exact timestamp match.
+fn get_forecast_for_day_offset(data: &ForecastRaw, days_ahead: i64) -> Option<ForecastModel> {
+    const PREFERRED_HOUR: i64 = 12;
 
-    let predicate = |t: &str| {
-        if let Ok(time) = chrono::DateTime::parse_from_rfc3339(t) {
-            return time.naive_utc() == tomorrow;
-        }
-        false
-    };
+    let target_date = Local::now().date_naive() + chrono::Duration::days(days_ahead);
 
-    let tomorrow_forecast = data
+    let closest = data
         .properties
         .timeseries
         .iter()
-        .find(|s| predicate(&s.time))
-        .expect("Tomorrows forcast should be in timeseries");
+        .filter_map(|series| {
+            let time = chrono::DateTime::parse_from_rfc3339(&series.time).ok()?;
+            let local_time = time.with_timezone(&Local);
+            if local_time.date_naive() != target_date {
+                return None;
+            }
+            let next_6_hours = series.data.next_6_hours.as_ref()?;
+            let hour_diff = (local_time.hour() as i64 - PREFERRED_HOUR).abs();
+            Some((hour_diff, next_6_hours))
+        })
+        .min_by_key(|(hour_diff, _)| *hour_diff)?
+        .1;
 
-    let next_6_hours = tomorrow_forecast
-        .data
-        .next_6_hours
-        .as_ref()
-        .expect("next_6_hours should be in forecast");
-
-    ForecastModel {
-        icon_name: next_6_hours.summary.symbol_code.to_owned(),
-        temp: std::format!("{:.0}", next_6_hours.details.air_temperature_max),
-        precip: std::format!("{:.0}", next_6_hours.details.precipitation_amount),
-    }
+    Some(ForecastModel {
+        icon_name: closest.summary.symbol_code.to_owned(),
+        temp: std::format!("{:.0}", closest.details.air_temperature_max),
+        precip: std::format!("{:.0}", closest.details.precipitation_amount),
+    })
 }
 
 fn get_icon(icon_name: String) -> Image {
