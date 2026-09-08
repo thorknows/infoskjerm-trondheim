@@ -72,6 +72,7 @@ async fn add_event_by_req(mut req: Request<()>) -> tide::Result {
         stop_time: event.stop_time,
         kind: EventKind::Event,
         description: String::new(),
+        location: String::new(),
     };
 
     let mut calendar = get_calendar().await;

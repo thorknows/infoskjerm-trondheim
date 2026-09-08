@@ -1,6 +1,6 @@
 use crate::calendar::calendar_models::{CalendarEvent, EventKind};
 use chrono::{DateTime, Local, NaiveTime, TimeZone};
-use icalendar::{CalendarComponent, CalendarDateTime, Component, DatePerhapsTime};
+use icalendar::{CalendarComponent, CalendarDateTime, Component, DatePerhapsTime, EventLike};
 use log::warn;
 use uuid::Uuid;
 
@@ -81,6 +81,7 @@ pub async fn fetch_ics_events(url: &str, kind: EventKind) -> Vec<CalendarEvent> 
             };
 
             let description = event.get_description().unwrap_or_default().to_string();
+            let location = event.get_location().unwrap_or_default().to_string();
 
             Some(CalendarEvent {
                 id: Uuid::new_v4(),
@@ -89,6 +90,7 @@ pub async fn fetch_ics_events(url: &str, kind: EventKind) -> Vec<CalendarEvent> 
                 stop_time,
                 kind,
                 description,
+                location,
             })
         })
         .collect()

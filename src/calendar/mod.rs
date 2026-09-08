@@ -130,6 +130,7 @@ async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<Calendar
                     summary: summary.into(),
                     date: date.into(),
                     description: event.description.as_str().into(),
+                    location: event.location.as_str().into(),
                     icon: get_icon(event.kind),
                     background,
                     textColor: text_color,

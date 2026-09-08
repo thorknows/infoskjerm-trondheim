@@ -31,6 +31,8 @@ pub struct CalendarEvent {
     pub kind: EventKind,
     #[serde(default)]
     pub description: String,
+    #[serde(default)]
+    pub location: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

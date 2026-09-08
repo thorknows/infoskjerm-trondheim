@@ -4,6 +4,7 @@ export struct Event {
         summary: string,
         date: string,
         description: string,
+        location: string,
         icon: image,
         background: color,
         textColor: color,
@@ -30,6 +31,7 @@ component EventCell {
         summary: "Før timer Før timerFør timer Før timer Før timer",
         date: "31. April",
         description: "",
+        location: "",
         icon: @image-url("../img/calendar/time.png"),
         background: #1F0D8D,
         textColor: #CFCFFF,
@@ -73,6 +75,12 @@ component EventCell {
                     text: event.date;
                 }
 
+                if event.location != "": Text {
+                    color: event.descriptionColor;
+                    font-size: 1.5rem;
+                    text: event.location;
+                }
+
                 if event.description != "": Text {
                     color: event.descriptionColor;
                     font-size: 1.5rem;
@@ -108,6 +116,7 @@ export component CalendarWidget {
             summary: "Lønningspils",
             date: "31. april",
             description: "",
+            location: "",
             icon: @image-url("../img/calendar/time.png"),
             background: #1F0D8D,
             textColor: #CFCFFF,
@@ -117,6 +126,7 @@ export component CalendarWidget {
             summary: "Før timer",
             date: "31. april",
             description: "",
+            location: "",
             icon: @image-url("../img/calendar/time.png"),
             background: #1F0D8D,
             textColor: #CFCFFF,
