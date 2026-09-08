@@ -8,7 +8,6 @@ mod datetime;
 mod food;
 mod forecast;
 mod selfie;
-mod xkcd;
 mod transportation;
 mod seasons;
 
@@ -27,7 +26,6 @@ fn main() -> Result<(), PlatformError> {
 
     let main_window = MainWindow::new().unwrap();
     forecast::setup(&main_window);
-    xkcd::setup(&main_window);
     food::setup(&main_window);
     calendar::setup(&main_window);
     transportation::setup(&main_window);

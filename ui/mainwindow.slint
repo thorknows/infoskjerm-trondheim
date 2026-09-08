@@ -1,7 +1,6 @@
 import { Button, VerticalBox } from "std-widgets.slint";
 
 import { GridBox , HorizontalBox} from "std-widgets.slint";
-import { Xkcd, XkcdWidget } from "xkcdwidget.slint";
 import { ForecastWidget, Forecast } from "forecastwidget.slint";
 import { FoodTrackerWidget, FoodTracking} from "foodtrackerwidget.slint";
 import { StopPlaceData, TransportationWidget } from "transportation.slint";
@@ -24,12 +23,6 @@ export component MainWindow inherits Window {
         precipitation: "2",
         icon: @image-url("../img/weather/partlycloudy_day.png")
     };
-    in property <Xkcd> xkcd: {
-        title: "Lorem Ipsum",
-        image: @image-url("../img/xkcd2.png"),
-        flavor_text: "Dolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit ametDolor sit amet"
-    };
-
     in property <FoodTracking> foodTracking: {
         active: false,
         resturant_name: "McDonalds",
@@ -113,11 +106,6 @@ export component MainWindow inherits Window {
 
             TransportationWidget {
                 stopPlacesData: stopPlacesData;
-            }
-
-            XkcdWidget {
-                max-height: 30rem;
-                xkcd: xkcd;
             }
         }
     }

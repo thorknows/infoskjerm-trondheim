@@ -15,6 +15,22 @@
           "lines": []
         }
       ]
+    },
+    {
+      "id": "NSR:StopPlace:43292",
+      "name": "Kongens gate",
+      "quays": [
+        {
+          "id": "NSR:Quay:74265",
+          "name": "Kongens gate K1",
+          "lines": []
+        },
+        {
+          "id": "NSR:Quay:74264",
+          "name": "Kongens gate K2",
+          "lines": []
+        }
+      ]
     }
   ]
 }
