@@ -16,5 +16,4 @@ while ! check_network; do
     sleep 5
 done
 
-unclutter -idle 10 &
 (/home/infoskjerm/bin/infoskjerm >> infoskjerm.log 2>&1) &

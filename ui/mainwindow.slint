@@ -72,45 +72,51 @@ export component MainWindow inherits Window {
 
     default-font-family: "Bagoss";
 
-    SeasonEffects {
-        snow: snowflakes;
-        spooky_face: spooky_face;
-        bat: bat;
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        mouse-cursor: none;
 
-        VerticalLayout {
-            width: 100%;
-            padding: 3rem;
-            spacing: 4rem;
-            alignment: start;
-            HorizontalLayout {
+        SeasonEffects {
+            snow: snowflakes;
+            spooky_face: spooky_face;
+            bat: bat;
+
+            VerticalLayout {
                 width: 100%;
-                alignment: space-between;
-                Text {
-                    font-size: 2.5rem;
-                    color: #FEFBE6;
-                    text: date;
+                padding: 3rem;
+                spacing: 4rem;
+                alignment: start;
+                HorizontalLayout {
+                    width: 100%;
+                    alignment: space-between;
+                    Text {
+                        font-size: 2.5rem;
+                        color: #FEFBE6;
+                        text: date;
+                    }
+
+                    Text {
+                        color: #FEFBE6;
+                        font-size: 2.5rem;
+                        text: time;
+                    }
                 }
 
-                Text {
-                    color: #FEFBE6;
-                    font-size: 2.5rem;
-                    text: time;
+                ForecastWidget {
+                    forecasts: forecasts;
                 }
-            }
 
-            ForecastWidget {
-                forecasts: forecasts;
-            }
+                if foodTracking.active: FoodTrackerWidget {
+                    tracking: foodTracking;
+                }
+                CalendarWidget {
+                    events: events;
+                }
 
-            if foodTracking.active: FoodTrackerWidget {
-                tracking: foodTracking;
-            }
-            CalendarWidget {
-                events: events;
-            }
-
-            TransportationWidget {
-                stopPlacesData: stopPlacesData;
+                TransportationWidget {
+                    stopPlacesData: stopPlacesData;
+                }
             }
         }
     }
