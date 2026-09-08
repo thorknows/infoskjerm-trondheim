@@ -56,9 +56,31 @@ pub async fn fetch_ics_events(url: &str, kind: EventKind) -> Vec<CalendarEvent> 
             _ => None,
         })
         .filter_map(|event| {
-            let summary = event.get_summary()?.to_string();
-            let start_time = to_local(&event.get_start()?, false)?;
-            let stop_time = to_local(&event.get_end()?, true)?;
+            let summary = match event.get_summary() {
+                Some(summary) => summary.to_string(),
+                None => {
+                    warn!("Skipping calendar event with no summary: {event:?}");
+                    return None;
+                }
+            };
+
+            let start_time = match event.get_start().and_then(|d| to_local(&d, false)) {
+                Some(start_time) => start_time,
+                None => {
+                    warn!("Skipping calendar event '{summary}' with no usable start time");
+                    return None;
+                }
+            };
+
+            let stop_time = match event.get_end().and_then(|d| to_local(&d, true)) {
+                Some(stop_time) => stop_time,
+                None => {
+                    warn!("Skipping calendar event '{summary}' with no usable end time");
+                    return None;
+                }
+            };
+
+            let description = event.get_description().unwrap_or_default().to_string();
 
             Some(CalendarEvent {
                 id: Uuid::new_v4(),
@@ -66,6 +88,7 @@ pub async fn fetch_ics_events(url: &str, kind: EventKind) -> Vec<CalendarEvent> 
                 start_time,
                 stop_time,
                 kind,
+                description,
             })
         })
         .collect()

@@ -29,6 +29,8 @@ pub struct CalendarEvent {
     pub stop_time: DateTime<Local>,
     #[serde(default)]
     pub kind: EventKind,
+    #[serde(default)]
+    pub description: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -3,6 +3,7 @@ import { Divider } from "utils.slint";
 export struct Event {
         summary: string,
         date: string,
+        description: string,
         icon: image,
 }
 
@@ -31,6 +32,7 @@ component EventCell {
     in property <Event> event: {
         summary: "Før timer Før timerFør timer Før timer Før timer",
         date: "31. April",
+        description: "",
         icon: @image-url("../img/calendar/time.png"),
     };
     Rectangle {
@@ -70,6 +72,12 @@ component EventCell {
                     font-size: 2rem;
                     text: event.date;
                 }
+
+                if event.description != "": Text {
+                    color: #CFCFFF80;
+                    font-size: 1.5rem;
+                    text: event.description;
+                }
             }
         }
     }
@@ -99,11 +107,13 @@ export component CalendarWidget {
         {
             summary: "Lønningspils",
             date: "31. april",
+            description: "",
             icon: @image-url("../img/calendar/time.png"),
         },
         {
             summary: "Før timer",
             date: "31. april",
+            description: "",
             icon: @image-url("../img/calendar/time.png"),
         }
     ];

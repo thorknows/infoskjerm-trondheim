@@ -97,14 +97,23 @@ async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<Calendar
             let take_count = min(3, upcoming_events.len());
 
             for event in &upcoming_events[0..take_count] {
-                let date_and_start_time = event
-                    .start_time
-                    .format_localized("%-d %B %H:%M", Locale::nb_NO);
-                let end_time = event.stop_time.format_localized("%H:%M", Locale::nb_NO);
+                let date = if event.kind == EventKind::Birthday {
+                    event
+                        .start_time
+                        .format_localized("%-d %B", Locale::nb_NO)
+                        .to_string()
+                } else {
+                    let date_and_start_time = event
+                        .start_time
+                        .format_localized("%-d %B %H:%M", Locale::nb_NO);
+                    let end_time = event.stop_time.format_localized("%H:%M", Locale::nb_NO);
+                    format!("{0}-{1}", date_and_start_time, end_time)
+                };
                 let summary = &event.summary;
                 calendar_events.push(Event {
                     summary: summary.into(),
-                    date: format!("{0}-{1}", date_and_start_time, end_time).into(),
+                    date: date.into(),
+                    description: event.description.as_str().into(),
                     icon: get_icon(event.kind),
                 });
             }
