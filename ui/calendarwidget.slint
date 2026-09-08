@@ -5,6 +5,9 @@ export struct Event {
         date: string,
         description: string,
         icon: image,
+        background: color,
+        textColor: color,
+        descriptionColor: color,
 }
 
 component Headings {
@@ -34,9 +37,12 @@ component EventCell {
         date: "31. April",
         description: "",
         icon: @image-url("../img/calendar/time.png"),
+        background: #1F0D8D,
+        textColor: #CFCFFF,
+        descriptionColor: #CFCFFF80,
     };
     Rectangle {
-        background: #1F0D8D;
+        background: event.background;
         border-radius: 32px;
         // width: 628px;
         // height: 128px;
@@ -62,19 +68,19 @@ component EventCell {
                 // Bredde - ikon - padding høyre/venstre - spacing
                 width: parent.width - 3rem - 3 * 32px;
                 Text {
-                    color: #CFCFFF;
+                    color: event.textColor;
                     font-size: 2.875rem;
                     text: event.summary;
                 }
 
                 Text {
-                    color: #CFCFFF;
+                    color: event.textColor;
                     font-size: 2rem;
                     text: event.date;
                 }
 
                 if event.description != "": Text {
-                    color: #CFCFFF80;
+                    color: event.descriptionColor;
                     font-size: 1.5rem;
                     text: event.description;
                 }
@@ -109,12 +115,18 @@ export component CalendarWidget {
             date: "31. april",
             description: "",
             icon: @image-url("../img/calendar/time.png"),
+            background: #1F0D8D,
+            textColor: #CFCFFF,
+            descriptionColor: #CFCFFF80,
         },
         {
             summary: "Før timer",
             date: "31. april",
             description: "",
             icon: @image-url("../img/calendar/time.png"),
+            background: #1F0D8D,
+            textColor: #CFCFFF,
+            descriptionColor: #CFCFFF80,
         }
     ];
     VerticalLayout {

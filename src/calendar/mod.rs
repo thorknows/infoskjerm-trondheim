@@ -11,7 +11,7 @@ use crate::calendar::ics::fetch_ics_events;
 use crate::calendar::storage::get_calendar;
 use crate::StaticAssets;
 use chrono::{Local, Locale, TimeZone};
-use slint::{Image, Rgba8Pixel, SharedPixelBuffer, VecModel, Weak};
+use slint::{Color, Image, Rgba8Pixel, SharedPixelBuffer, VecModel, Weak};
 use std::{cmp::min, env, rc::Rc, thread};
 use tokio::runtime::Runtime;
 
@@ -83,6 +83,21 @@ fn get_icon(kind: EventKind) -> Image {
     Image::from_rgba8(buffer)
 }
 
+fn get_colors(kind: EventKind) -> (Color, Color, Color) {
+    match kind {
+        EventKind::Event => (
+            Color::from_rgb_u8(0x1F, 0x0D, 0x8D),
+            Color::from_rgb_u8(0xCF, 0xCF, 0xFF),
+            Color::from_argb_u8(0x80, 0xCF, 0xCF, 0xFF),
+        ),
+        EventKind::Birthday => (
+            Color::from_rgb_u8(0xE2, 0xE8, 0xF0),
+            Color::from_rgb_u8(0x00, 0x00, 0x00),
+            Color::from_argb_u8(0x80, 0x00, 0x00, 0x00),
+        ),
+    }
+}
+
 async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<CalendarEvent>) {
     window_weak
         .upgrade_in_event_loop(move |window: MainWindow| {
@@ -110,11 +125,15 @@ async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<Calendar
                     format!("{0}-{1}", date_and_start_time, end_time)
                 };
                 let summary = &event.summary;
+                let (background, text_color, description_color) = get_colors(event.kind);
                 calendar_events.push(Event {
                     summary: summary.into(),
                     date: date.into(),
                     description: event.description.as_str().into(),
                     icon: get_icon(event.kind),
+                    background,
+                    textColor: text_color,
+                    descriptionColor: description_color,
                 });
             }
 
