@@ -73,7 +73,7 @@ component DisplayColumn {
 }
 
 export component TransportationWidget{
-    in property <[StopPlaceData]> stopPlacesData;
+    in property <[[StopPlaceData]]> stopPlacesData;
 
     VerticalLayout {
         spacing: 2rem;
@@ -85,9 +85,12 @@ export component TransportationWidget{
             horizontal-alignment: left;
         }
 
-        HorizontalLayout {
-            for stopPlace in stopPlacesData : DisplayColumn {
-                stopPlaceData: stopPlace;
+        VerticalLayout {
+            spacing: 2rem;
+            for stopGroup in stopPlacesData : HorizontalLayout {
+                for stopPlace in stopGroup : DisplayColumn {
+                    stopPlaceData: stopPlace;
+                }
             }
         }
     }

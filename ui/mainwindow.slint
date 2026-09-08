@@ -40,19 +40,21 @@ export component MainWindow inherits Window {
     in-out property <SpookyFace> spooky_face;
     in-out property <Bat> bat;
 
-    in property <[StopPlaceData]> stopPlacesData: [
-        {
-            stopName: "Placeholder",
-            stopDataRows: [
-                {
-                    transportMode: @image-url("../img/transport/walk.png"),
-                    publicCode: 0,
-                    destinationFrontText: "Månen",
-                    departureTime: "Nå",
-                    realtime: false,
-                }
-            ]
-        }
+    in property <[[StopPlaceData]]> stopPlacesData: [
+        [
+            {
+                stopName: "Placeholder",
+                stopDataRows: [
+                    {
+                        transportMode: @image-url("../img/transport/walk.png"),
+                        publicCode: 0,
+                        destinationFrontText: "Månen",
+                        departureTime: "Nå",
+                        realtime: false,
+                    }
+                ]
+            }
+        ]
     ];
 
     in property <int> name;

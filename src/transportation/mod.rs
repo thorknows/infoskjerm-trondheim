@@ -11,7 +11,9 @@ use graphql_client::{GraphQLQuery, Response};
 use log::{debug, info};
 use reqwest;
 use reqwest::header;
-use slint::{ComponentHandle, Image, Rgba8Pixel, SharedPixelBuffer, SharedString, VecModel, Weak};
+use slint::{
+    ComponentHandle, Image, ModelRc, Rgba8Pixel, SharedPixelBuffer, SharedString, VecModel, Weak,
+};
 use query::Variables;
 use crate::StaticAssets;
 use crate::transportation::query::{QueryStopPlace, QueryStopPlaceQuays, QueryStopPlaceQuaysEstimatedCalls, ResponseData, TransportMode};
@@ -48,7 +50,7 @@ async fn transportation_worker_loop(window: Weak<MainWindow>) {
     loop {
         match read_tracked_stops() {
             Ok(tracked_stops) => {
-                let mut all_filtered_quays: Vec<QueryStopPlaceQuays> = Vec::new();
+                let mut stop_groups: Vec<Vec<QueryStopPlaceQuays>> = Vec::new();
 
                 for tracked_stop in tracked_stops.stops {
                     // Run GraphQL Query
@@ -76,10 +78,10 @@ async fn transportation_worker_loop(window: Weak<MainWindow>) {
                         Some(filtered_quays) => filtered_quays
                     };
 
-                    all_filtered_quays.extend(filtered_quays);
+                    stop_groups.push(filtered_quays);
                 }
 
-                display_transportation(&window, all_filtered_quays);
+                display_transportation(&window, stop_groups);
             }
             Err(_) => {
                 info! { "Unable to read file containing tracked stops information." }
@@ -90,37 +92,43 @@ async fn transportation_worker_loop(window: Weak<MainWindow>) {
     }
 }
 
-fn display_transportation(window: &Weak<MainWindow>, filtered_quays: Vec<QueryStopPlaceQuays>) {
+fn display_transportation(window: &Weak<MainWindow>, stop_groups: Vec<Vec<QueryStopPlaceQuays>>) {
     let _ = window.upgrade_in_event_loop(|window: MainWindow| {
 
-        let all_stops_data: VecModel<StopPlaceData> = VecModel::default();
+        let all_groups: VecModel<ModelRc<StopPlaceData>> = VecModel::default();
 
-        for quay in filtered_quays {
-            let quay_name = quay.name;
-            let quay_public_code = quay.public_code.unwrap_or(String::from(""));
-            
-            debug!("Processing quay {} {}", quay_name, quay_public_code);
-            let stop_place_data_rows: VecModel<StopPlaceDataRow> = VecModel::default();
+        for group in stop_groups {
+            let group_data: VecModel<StopPlaceData> = VecModel::default();
 
-            for estimated_call in quay.estimated_calls {
-                match extract_relevant_values(estimated_call) {
-                    None => {
-                        info!("Unable to extract values from estimated call. Skipping.");
-                        continue
-                    }
-                    Some(row) => stop_place_data_rows.push(row)
+            for quay in group {
+                let quay_name = quay.name;
+                let quay_public_code = quay.public_code.unwrap_or(String::from(""));
+
+                debug!("Processing quay {} {}", quay_name, quay_public_code);
+                let stop_place_data_rows: VecModel<StopPlaceDataRow> = VecModel::default();
+
+                for estimated_call in quay.estimated_calls {
+                    match extract_relevant_values(estimated_call) {
+                        None => {
+                            info!("Unable to extract values from estimated call. Skipping.");
+                            continue
+                        }
+                        Some(row) => stop_place_data_rows.push(row)
+                    };
+                }
+
+                let stop_place_data = StopPlaceData {
+                    stopName: SharedString::from(format!("{} {}", quay_name, quay_public_code)),
+                    stopDataRows: Rc::new(stop_place_data_rows).into()
                 };
+
+                group_data.push(stop_place_data);
             }
 
-            let stop_place_data = StopPlaceData {
-                stopName: SharedString::from(format!("{} {}", quay_name, quay_public_code)),
-                stopDataRows: Rc::new(stop_place_data_rows).into()
-            };
-
-            all_stops_data.push(stop_place_data);
+            all_groups.push(Rc::new(group_data).into());
         }
 
-        window.set_stopPlacesData(Rc::new(all_stops_data).into());
+        window.set_stopPlacesData(Rc::new(all_groups).into());
     });
 }
 
