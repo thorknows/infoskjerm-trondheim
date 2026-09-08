@@ -1,4 +1,4 @@
-use crate::calendar::calendar_models::{Calendar, CalendarEvent, ExternalCalendarEvent};
+use crate::calendar::calendar_models::{Calendar, CalendarEvent, EventKind, ExternalCalendarEvent};
 use crate::calendar::storage::{add_event, get_calendar, save_calendar};
 use askama::Template;
 use chrono::Local;
@@ -70,6 +70,7 @@ async fn add_event_by_req(mut req: Request<()>) -> tide::Result {
         summary: event.summary,
         start_time: event.start_time,
         stop_time: event.stop_time,
+        kind: EventKind::Event,
     };
 
     let mut calendar = get_calendar().await;

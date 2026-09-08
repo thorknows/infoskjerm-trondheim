@@ -3,28 +3,18 @@ import { Divider } from "utils.slint";
 export struct Event {
         summary: string,
         date: string,
+        icon: image,
 }
 
 component Headings {
-    in property <string> calendarServerUrl: "localhost:1338/";
-
     VerticalLayout {
         padding-bottom: 29px;
         spacing: 32px;
-        VerticalLayout {
-            Text {
-                font-size: 4rem;
-                height: 5rem;
-                color: #FEFBE6;
-                text: "Kalender";
-            }
-
-            Text {
-                font-size: 1.5rem;
-                color: #FEFBE680;
-                font-italic: true;
-                text: "Legg inn hendelser her: " + calendarServerUrl + "calendar";
-            }
+        Text {
+            font-size: 4rem;
+            height: 5rem;
+            color: #FEFBE6;
+            text: "Kalender";
         }
 
         Text {
@@ -41,6 +31,7 @@ component EventCell {
     in property <Event> event: {
         summary: "Før timer Før timerFør timer Før timer Før timer",
         date: "31. April",
+        icon: @image-url("../img/calendar/time.png"),
     };
     Rectangle {
         background: #1F0D8D;
@@ -58,7 +49,7 @@ component EventCell {
                 Image {
                     height: 3rem;
                     width: 3rem;
-                    source: @image-url("../img/calendar/time.png");
+                    source: event.icon;
                 }
             }
 
@@ -116,13 +107,10 @@ export component CalendarWidget {
             icon: @image-url("../img/calendar/time.png"),
         }
     ];
-    in property <string> calendarServerUrl;
     VerticalLayout {
         alignment: start;
         padding-top: 1rem;
-        Headings {
-            calendarServerUrl: calendarServerUrl;
-        }
+        Headings { }
 
         HorizontalLayout {
             height: 460px;

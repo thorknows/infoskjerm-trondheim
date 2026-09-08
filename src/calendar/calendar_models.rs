@@ -3,6 +3,14 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum EventKind {
+    #[default]
+    Event,
+    Birthday,
+}
+
 #[derive(Template, Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[template(
     ext = "html",
@@ -19,6 +27,8 @@ pub struct CalendarEvent {
     pub summary: String,
     pub start_time: DateTime<Local>,
     pub stop_time: DateTime<Local>,
+    #[serde(default)]
+    pub kind: EventKind,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

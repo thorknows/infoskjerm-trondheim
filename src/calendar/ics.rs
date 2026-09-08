@@ -1,4 +1,4 @@
-use crate::calendar::calendar_models::CalendarEvent;
+use crate::calendar::calendar_models::{CalendarEvent, EventKind};
 use chrono::{DateTime, Local, NaiveTime, TimeZone};
 use icalendar::{CalendarComponent, CalendarDateTime, Component, DatePerhapsTime};
 use log::warn;
@@ -25,7 +25,7 @@ fn to_local(value: &DatePerhapsTime, end_of_day: bool) -> Option<DateTime<Local>
     }
 }
 
-pub async fn fetch_ics_events(url: &str) -> Vec<CalendarEvent> {
+pub async fn fetch_ics_events(url: &str, kind: EventKind) -> Vec<CalendarEvent> {
     let body = match reqwest::get(url).await {
         Ok(response) => match response.text().await {
             Ok(text) => text,
@@ -65,6 +65,7 @@ pub async fn fetch_ics_events(url: &str) -> Vec<CalendarEvent> {
                 summary,
                 start_time,
                 stop_time,
+                kind,
             })
         })
         .collect()

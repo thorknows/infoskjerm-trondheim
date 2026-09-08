@@ -6,20 +6,21 @@ mod storage;
 
 use crate::ui::*;
 
-use crate::calendar::calendar_models::CalendarEvent;
+use crate::calendar::calendar_models::{CalendarEvent, EventKind};
 use crate::calendar::ics::fetch_ics_events;
 use crate::calendar::storage::get_calendar;
+use crate::StaticAssets;
 use chrono::{Local, Locale, TimeZone};
-use slint::{VecModel, Weak};
+use slint::{Image, Rgba8Pixel, SharedPixelBuffer, VecModel, Weak};
 use std::{cmp::min, env, rc::Rc, thread};
 use tokio::runtime::Runtime;
 
-fn get_server_url() -> String {
-    env::var("CALENDAR_SERVER_URL").unwrap_or(String::from("http://localhost:1338/"))
-}
-
 fn get_ics_url() -> Option<String> {
     env::var("CALENDAR_ICS_URL").ok()
+}
+
+fn get_birthdays_ics_url() -> Option<String> {
+    env::var("CALENDAR_BIRTHDAYS_ICS_URL").ok()
 }
 
 pub fn setup(window: &MainWindow) {
@@ -45,12 +46,41 @@ async fn calendar_worker_loop(window: Weak<MainWindow>) {
         let mut events = current_calendar.events;
 
         if let Some(ics_url) = get_ics_url() {
-            events.extend(fetch_ics_events(&ics_url).await);
+            events.extend(fetch_ics_events(&ics_url, EventKind::Event).await);
+        }
+
+        if let Some(birthdays_url) = get_birthdays_ics_url() {
+            events.extend(fetch_ics_events(&birthdays_url, EventKind::Birthday).await);
         }
 
         display_calendar(&window, events).await;
         tokio::time::sleep(std::time::Duration::from_secs(60)).await;
     }
+}
+
+fn get_icon(kind: EventKind) -> Image {
+    let icon_path = match kind {
+        EventKind::Event => "calendar/time.png",
+        EventKind::Birthday => "calendar/birthday.png",
+    };
+
+    let icon_data = StaticAssets::get(icon_path)
+        .or_else(|| StaticAssets::get("not-found.png"))
+        .unwrap()
+        .data
+        .into_owned();
+
+    let icon = image::load_from_memory_with_format(&icon_data, image::ImageFormat::Png)
+        .unwrap()
+        .into_rgba8();
+
+    let buffer = SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(
+        icon.as_raw(),
+        icon.width(),
+        icon.height(),
+    );
+
+    Image::from_rgba8(buffer)
 }
 
 async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<CalendarEvent>) {
@@ -75,16 +105,11 @@ async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<Calendar
                 calendar_events.push(Event {
                     summary: summary.into(),
                     date: format!("{0}-{1}", date_and_start_time, end_time).into(),
+                    icon: get_icon(event.kind),
                 });
             }
 
             window.set_events(Rc::new(calendar_events).into());
-
-            let mut server_url = get_server_url();
-            if !server_url.ends_with('/') {
-                server_url.push('/');
-            }
-            window.set_calendarServerUrl(server_url.into());
         })
         .unwrap();
 }
