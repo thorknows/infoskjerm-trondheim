@@ -124,15 +124,22 @@ fn display_transportation(window: &Weak<MainWindow>, filtered_quays: Vec<QuerySt
     });
 }
 
+const DEFAULT_TRACKED_STOPS: &str = include_str!("trackedStops.json");
+
 fn read_tracked_stops() -> Result<TrackedStops, Box<dyn Error>> {
-    // Open the file in read-only mode with buffer.
-    let file = File::open("src/transportation/trackedStops.json")?;
+    let home_dir = dirs::home_dir().ok_or("Could not determine home directory")?;
+    let path = home_dir.join(".transportation").join("trackedStops.json");
+
+    if !path.try_exists()? {
+        std::fs::create_dir_all(path.parent().unwrap())?;
+        std::fs::write(&path, DEFAULT_TRACKED_STOPS)?;
+    }
+
+    let file = File::open(&path)?;
     let reader = BufReader::new(file);
 
-    // Read the JSON contents of the file as an instance of `User`.
     let tracked_stops = serde_json::from_reader(reader)?;
 
-    // Return the object.
     Ok(tracked_stops)
 }
 

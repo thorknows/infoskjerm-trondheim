@@ -27,25 +27,10 @@ component Headings {
             }
         }
 
-        HorizontalLayout {
-            spacing: 56px;
-            Rectangle {
-                Text {
-                    font-size: 2.5rem;
-                    color: #FEFBE6;
-                    text: "Events";
-                    x: 0;
-                }
-            }
-
-            Rectangle {
-                Text {
-                    x: 0;
-                    font-size: 2.5rem;
-                    color: #FEFBE6;
-                    text: "Møterom";
-                }
-            }
+        Text {
+            font-size: 2.5rem;
+            color: #FEFBE6;
+            text: "Events";
         }
 
         Divider { }
@@ -131,13 +116,6 @@ export component CalendarWidget {
             icon: @image-url("../img/calendar/time.png"),
         }
     ];
-    in property <[Event]> meetings: [
-        {
-            summary: "Lønningspils",
-            date: "31. april",
-            icon: @image-url("../img/calendar/time.png"),
-        }
-    ];
     in property <string> calendarServerUrl;
     VerticalLayout {
         alignment: start;
@@ -147,16 +125,10 @@ export component CalendarWidget {
         }
 
         HorizontalLayout {
-            spacing: 56px;
             height: 460px;
             EventStack {
                 empty-text: "Ingenting planlagt for øyeblikket";
                 events: events;
-            }
-
-            EventStack {
-                empty-text: "Ikke implementert";
-                events: meetings;
             }
         }
     }
