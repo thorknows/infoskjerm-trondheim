@@ -14,7 +14,7 @@ mod forecast_models;
 const API_URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=63.2549&lon=10.2342";
 const USER_AGENT_STR: &str = "Knowit Infoskjerm - github.com/Knowit-Objectnet/infoskjerm-trondheim";
-const FUTURE_DAYS: i64 = 4;
+const FUTURE_DAYS: i64 = 2;
 
 fn get_empty_forecast() -> ForecastModel {
     ForecastModel {
