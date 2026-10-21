@@ -9,6 +9,7 @@ pub enum EventKind {
     #[default]
     Event,
     Birthday,
+    Holiday,
 }
 
 #[derive(Template, Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

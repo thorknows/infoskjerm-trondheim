@@ -5,6 +5,7 @@ export struct Event {
         date: string,
         description: string,
         location: string,
+        countdown: string,
         icon: image,
         background: color,
         textColor: color,
@@ -32,6 +33,7 @@ component EventCell {
         date: "31. April",
         description: "",
         location: "",
+        countdown: "",
         icon: @image-url("../img/calendar/time.png"),
         background: #1F0D8D,
         textColor: #CFCFFF,
@@ -61,8 +63,8 @@ component EventCell {
                 alignment: center;
                 spacing: 6px;
                 // Må sette bredde for at clipping skal fungere
-                // Bredde - ikon - padding høyre/venstre - spacing
-                width: parent.width - 3rem - 3 * 32px;
+                // Bredde - ikon - padding høyre/venstre - spacing - (evt. countdown-kolonne)
+                width: parent.width - 3rem - 3 * 32px - (event.countdown != "" ? (6rem + 32px) : 0px);
                 Text {
                     color: event.textColor;
                     font-size: 2.875rem;
@@ -86,6 +88,15 @@ component EventCell {
                     font-size: 1.5rem;
                     text: event.description;
                 }
+            }
+
+            if event.countdown != "": Text {
+                width: 6rem;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+                color: event.textColor;
+                font-size: 2rem;
+                text: event.countdown;
             }
         }
     }
@@ -117,6 +128,7 @@ export component CalendarWidget {
             date: "31. april",
             description: "",
             location: "",
+            countdown: "",
             icon: @image-url("../img/calendar/time.png"),
             background: #1F0D8D,
             textColor: #CFCFFF,
@@ -127,6 +139,7 @@ export component CalendarWidget {
             date: "31. april",
             description: "",
             location: "",
+            countdown: "",
             icon: @image-url("../img/calendar/time.png"),
             background: #1F0D8D,
             textColor: #CFCFFF,

@@ -1,4 +1,5 @@
 mod calendar_models;
+mod holidays;
 mod ics;
 mod server;
 
@@ -7,6 +8,7 @@ mod storage;
 use crate::ui::*;
 
 use crate::calendar::calendar_models::{CalendarEvent, EventKind};
+use crate::calendar::holidays::{build_holiday_events, countdown_text};
 use crate::calendar::ics::fetch_ics_events;
 use crate::calendar::storage::get_calendar;
 use crate::StaticAssets;
@@ -53,6 +55,8 @@ async fn calendar_worker_loop(window: Weak<MainWindow>) {
             events.extend(fetch_ics_events(&birthdays_url, EventKind::Birthday).await);
         }
 
+        events.extend(build_holiday_events());
+
         display_calendar(&window, events).await;
         tokio::time::sleep(std::time::Duration::from_secs(60)).await;
     }
@@ -62,6 +66,7 @@ fn get_icon(kind: EventKind) -> Image {
     let icon_path = match kind {
         EventKind::Event => "calendar/time.png",
         EventKind::Birthday => "calendar/birthday.png",
+        EventKind::Holiday => "calendar/time.png",
     };
 
     let icon_data = StaticAssets::get(icon_path)
@@ -95,6 +100,11 @@ fn get_colors(kind: EventKind) -> (Color, Color, Color) {
             Color::from_rgb_u8(0x00, 0x00, 0x00),
             Color::from_argb_u8(0x80, 0x00, 0x00, 0x00),
         ),
+        EventKind::Holiday => (
+            Color::from_rgb_u8(0x14, 0x53, 0x2D),
+            Color::from_rgb_u8(0xD1, 0xFA, 0xE5),
+            Color::from_argb_u8(0x80, 0xD1, 0xFA, 0xE5),
+        ),
     }
 }
 
@@ -112,11 +122,20 @@ async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<Calendar
             let take_count = min(3, upcoming_events.len());
 
             for event in &upcoming_events[0..take_count] {
-                let date = if event.kind == EventKind::Birthday {
-                    event
-                        .start_time
-                        .format_localized("%-d %B", Locale::nb_NO)
-                        .to_string()
+                let is_all_day = matches!(event.kind, EventKind::Birthday | EventKind::Holiday);
+                let is_multi_day = event.start_time.date_naive() != event.stop_time.date_naive();
+
+                let date = if is_all_day {
+                    if is_multi_day {
+                        let start = event.start_time.format_localized("%-d %B", Locale::nb_NO);
+                        let end = event.stop_time.format_localized("%-d %B", Locale::nb_NO);
+                        format!("{0} - {1}", start, end)
+                    } else {
+                        event
+                            .start_time
+                            .format_localized("%-d %B", Locale::nb_NO)
+                            .to_string()
+                    }
                 } else {
                     let date_and_start_time = event
                         .start_time
@@ -124,6 +143,13 @@ async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<Calendar
                     let end_time = event.stop_time.format_localized("%H:%M", Locale::nb_NO);
                     format!("{0}-{1}", date_and_start_time, end_time)
                 };
+
+                let countdown = if event.kind == EventKind::Holiday {
+                    countdown_text(event.start_time.date_naive())
+                } else {
+                    String::new()
+                };
+
                 let summary = &event.summary;
                 let (background, text_color, description_color) = get_colors(event.kind);
                 calendar_events.push(Event {
@@ -131,6 +157,7 @@ async fn display_calendar(window_weak: &Weak<MainWindow>, calendar: Vec<Calendar
                     date: date.into(),
                     description: event.description.as_str().into(),
                     location: event.location.as_str().into(),
+                    countdown: countdown.into(),
                     icon: get_icon(event.kind),
                     background,
                     textColor: text_color,
