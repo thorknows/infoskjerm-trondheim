@@ -11,7 +11,7 @@ from pathlib import Path
 
 # Step 1: Get the latest release JSON
 response = requests.get(
-    "https://api.github.com/repos/Knowit-Objectnet/infoskjerm-trondheim/releases/latest")
+    "https://api.github.com/repos/thorknows/infoskjerm-trondheim/releases/latest")
 release_json = response.json()
 
 # Print the downloaded version
