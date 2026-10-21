@@ -29,7 +29,7 @@ GUI-koden eksponerar også typar, som `Forecast`-structen i [weatherwidget.slint
 * Klokke og dato
 * Matsporing via Wolt
 * Busstider
-* Aktivitetskalender (inkludert bursdagar via eigen ICS-kalender)
+* Aktivitetskalender (inkludert bursdager via egen ICS-kalender)
 
 ## Idear til funksjonalitet
 * Møteromsstatus
@@ -47,7 +47,7 @@ GUI-koden eksponerar også typar, som `Forecast`-structen i [weatherwidget.slint
 
 ## Jobbe på den fysiske skjermen (kontoret)
 
-Infoskjermen køyrer på ein Raspberry Pi plassert på Knowit-kontoret i Trondheim. For å gjere endringar eller feilsøke direkte på eininga, må du vere kopla til kontornettverket (Wi-Fi: `knowit-devices`), anten fysisk til stades eller via same nettverk.
+Infoskjermen kjører på en Raspberry Pi plassert på Knowit-kontoret i Trondheim. For å gjøre endringer eller feilsøke direkte på enheten, må du være koblet til kontornettverket (Wi-Fi: `knowit-devices`), enten fysisk til stede eller via samme nettverk.
 
 ### SSH
 
@@ -55,39 +55,39 @@ Infoskjermen køyrer på ein Raspberry Pi plassert på Knowit-kontoret i Trondhe
 ssh infoskjerm@infoskjerm.local
 ```
 
-* Brukarnamn: `infoskjerm`
-* Passord: spør ein kollega eller sjekk passordhvelvet — det skal **ikkje** leggjast inn her, sidan dette repoet er offentleg.
-* `infoskjerm.local` er eit mDNS-namn. Om det ikkje let seg slå opp (t.d. på Windows utan Bonjour installert), finn IP-adressa via ruterens tilkopla einingar i staden.
+* Brukernavn: `infoskjerm`
+* Passord: spør en kollega eller sjekk passordhvelvet — det skal **ikke** legges inn her, siden dette repoet er offentlig.
+* `infoskjerm.local` er et mDNS-navn. Om det ikke lar seg slå opp (f.eks. på Windows uten Bonjour installert), finn IP-adressen via ruterens tilkoblede enheter i stedet.
 
-### Vanlege oppgåver
+### Vanlige oppgaver
 
-**Restarte applikasjonen** (t.d. etter å ha endra miljøvariablar eller konfigurasjonsfiler):
+**Restarte applikasjonen** (f.eks. etter å ha endret miljøvariabler eller konfigurasjonsfiler):
 ```shell
 pkill infoskjerm
 cd ~/bin && sh run.sh &
 ```
 
-**Sjå loggar:**
+**Se logger:**
 ```shell
 tail -f ~/bin/infoskjerm.log
 ```
 
-**Konfigurasjon som ligg lokalt på Pi-en** (ikkje i dette repoet):
-* `~/bin/run.sh` — miljøvariablar som `CALENDAR_ICS_URL`, `CALENDAR_BIRTHDAYS_ICS_URL`, `CALENDAR_SERVER_URL`, `WOLT_TRACKING_URL` m.fl.
-* `~/.transportation/trackedStops.json` — kva Entur-stoppestadar/kaier som vert viste. Sjå `src/transportation/trackedStops.json` for formatet; legg til fleire stopp ved å utvide `stops`-lista, med StopPlace- og Quay-IDar henta frå Entur sitt GraphQL-API.
-* `~/.cal/calendar.json` — manuelt lagte kalenderhendingar (lagt til via webskjemaet på `CALENDAR_SERVER_URL`, t.d. `http://infoskjerm.local:1338/calendar`).
+**Konfigurasjon som ligger lokalt på Pi-en** (ikke i dette repoet):
+* `~/bin/run.sh` — miljøvariabler som `CALENDAR_ICS_URL`, `CALENDAR_BIRTHDAYS_ICS_URL`, `CALENDAR_SERVER_URL`, `WOLT_TRACKING_URL` m.fl.
+* `~/.transportation/trackedStops.json` — hvilke Entur-stoppesteder/kaier som vises. Se `src/transportation/trackedStops.json` for formatet; legg til flere stopp ved å utvide `stops`-listen, med StopPlace- og Quay-IDer hentet fra Entur sitt GraphQL-API.
+* `~/.cal/calendar.json` — manuelt lagte kalenderhendelser (lagt til via webskjemaet på `CALENDAR_SERVER_URL`, f.eks. `http://infoskjerm.local:1338/calendar`).
 
-### Rulle ut ei ny utgåve
+### Rulle ut en ny utgave
 
-1. Push endringar og lag ein ny release-tag (GitHub Actions-workflowen `Build and release` køyrer automatisk på tag `v*`, eller trigges manuelt via `workflow_dispatch`).
+1. Push endringer og lag en ny release-tag (GitHub Actions-workflowen `Build and release` kjører automatisk på tag `v*`, eller trigges manuelt via `workflow_dispatch`).
 2. På Pi-en, last ned og pakk ut den nye binærfila:
    ```shell
    cd ~/bin && python3 update.py
    ```
-   Dette hentar siste release frå GitHub, stoppar den køyrande prosessen, og startar applikasjonen på nytt automatisk. Må køyrast frå `~/bin`, sidan `update.py` pakkar ut filer relativt til gjeldande mappe.
-3. Om du berre har endra miljøvariablar/konfigurasjon (ikkje kildekoden), held det å restarte applikasjonen som over — ingen ny utrulling nødvendig.
+   Dette henter siste release fra GitHub, stopper den kjørende prosessen, og starter applikasjonen på nytt automatisk. Må kjøres fra `~/bin`, siden `update.py` pakker ut filer relativt til gjeldende mappe.
+3. Om du bare har endret miljøvariabler/konfigurasjon (ikke kildekoden), holder det å restarte applikasjonen som over — ingen ny utrulling nødvendig.
 
-Applikasjonen startar automatisk ved oppstart av Pi-en (autologin på skrivebordet → `~/.config/labwc/autostart` → `run.sh`), så ein restart av heile eininga fungerer også som ein enkel "restart alt"-knapp.
+Applikasjonen starter automatisk ved oppstart av Pi-en (autologin på skrivebordet → `~/.config/labwc/autostart` → `run.sh`), så en restart av hele enheten fungerer også som en enkel "restart alt"-knapp.
 
 ## Vedlikehold
 
