@@ -24,6 +24,12 @@ const BASE_URL: &str = "https://api.entur.io/journey-planner/v3/graphql";
 // https://developer.entur.org/pages-intro-authentication
 const ET_CLIENT: &str = "knowit-objectnet-trd-infoscreen";
 const DEFAULT_NUMBER_OF_DEPARTURES: i64 = 8;
+// We request more departures than we display, since some get filtered out for being too
+// soon to realistically catch (see MIN_MINUTES_TO_CATCH) -- this keeps the display count
+// at DEFAULT_NUMBER_OF_DEPARTURES even after filtering.
+const REQUESTED_DEPARTURES_BUFFER: i64 = DEFAULT_NUMBER_OF_DEPARTURES * 2;
+// Departures sooner than this aren't realistically catchable (time to walk to the stop).
+const MIN_MINUTES_TO_CATCH: i64 = 3;
 const POLLING_TIME: u64 = 60; // In seconds
 
 type Date = String;
@@ -105,17 +111,23 @@ fn display_transportation(window: &Weak<MainWindow>, stop_groups: Vec<Vec<QueryS
                 let quay_public_code = quay.public_code.unwrap_or(String::from(""));
 
                 debug!("Processing quay {} {}", quay_name, quay_public_code);
-                let stop_place_data_rows: VecModel<StopPlaceDataRow> = VecModel::default();
+                let mut rows: Vec<StopPlaceDataRow> = Vec::new();
 
                 for estimated_call in quay.estimated_calls {
+                    if !has_enough_time_to_catch(estimated_call.expected_departure_time) {
+                        continue;
+                    }
                     match extract_relevant_values(estimated_call) {
                         None => {
                             info!("Unable to extract values from estimated call. Skipping.");
                             continue
                         }
-                        Some(row) => stop_place_data_rows.push(row)
+                        Some(row) => rows.push(row)
                     };
                 }
+
+                rows.truncate(DEFAULT_NUMBER_OF_DEPARTURES as usize);
+                let stop_place_data_rows: VecModel<StopPlaceDataRow> = VecModel::from(rows);
 
                 let stop_place_data = StopPlaceData {
                     stopName: SharedString::from(format!("{} {}", quay_name, quay_public_code)),
@@ -175,6 +187,12 @@ fn filter_by_quays_and_lines(query_stop_place: QueryStopPlace, tracked_stop: Tra
     // - Implement filtering by specific lines per quay
 
     return Some(picked_query_quays)
+}
+
+fn has_enough_time_to_catch(departure_time: DateTime) -> bool {
+    let local_now = Local::now();
+    let local_departure_time = departure_time.with_timezone(&Local);
+    local_departure_time.signed_duration_since(local_now) >= TimeDelta::minutes(MIN_MINUTES_TO_CATCH)
 }
 
 fn extract_relevant_values(estimated_call: QueryStopPlaceQuaysEstimatedCalls) -> Option<StopPlaceDataRow> {
@@ -240,7 +258,7 @@ async fn get_stop_place(tracked_stop: TrackedStop) -> Result<ResponseData, Box<d
 
     let variables = Variables {
         id: tracked_stop.id,
-        number_of_departures: Some(DEFAULT_NUMBER_OF_DEPARTURES),
+        number_of_departures: Some(REQUESTED_DEPARTURES_BUFFER),
     };
     
     let request_body = Query::build_query(variables);
