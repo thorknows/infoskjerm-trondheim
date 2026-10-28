@@ -1,5 +1,5 @@
 use crate::calendar::calendar_models::{CalendarEvent, EventKind};
-use chrono::{DateTime, Local, NaiveTime, TimeZone};
+use chrono::{DateTime, Duration, Local, NaiveTime, TimeZone};
 use icalendar::{CalendarComponent, CalendarDateTime, Component, DatePerhapsTime, EventLike};
 use log::warn;
 use uuid::Uuid;
@@ -15,10 +15,12 @@ fn to_local(value: &DatePerhapsTime, end_of_day: bool) -> Option<DateTime<Local>
             Local.from_local_datetime(date_time).single()
         }
         DatePerhapsTime::Date(date) => {
-            let time = if end_of_day {
-                NaiveTime::from_hms_opt(23, 59, 59).unwrap()
+            // RFC 5545: DTEND for an all-day event is exclusive (the day after the last day
+            // of the event), so the inclusive last day is one day earlier.
+            let (date, time) = if end_of_day {
+                (*date - Duration::days(1), NaiveTime::from_hms_opt(23, 59, 59).unwrap())
             } else {
-                NaiveTime::from_hms_opt(0, 0, 0).unwrap()
+                (*date, NaiveTime::from_hms_opt(0, 0, 0).unwrap())
             };
             Local.from_local_datetime(&date.and_time(time)).single()
         }
@@ -94,4 +96,48 @@ pub async fn fetch_ics_events(url: &str, kind: EventKind) -> Vec<CalendarEvent> 
             })
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn single_day_all_day_event_stays_within_one_day() {
+        // Outlook/Google encode a single-day all-day event (e.g. a birthday on 11 Jan) as
+        // DTSTART=20260111, DTEND=20260112 -- DTEND is exclusive per RFC 5545.
+        let start = to_local(
+            &DatePerhapsTime::Date(NaiveDate::from_ymd_opt(2026, 1, 11).unwrap()),
+            false,
+        )
+        .unwrap();
+        let end = to_local(
+            &DatePerhapsTime::Date(NaiveDate::from_ymd_opt(2026, 1, 12).unwrap()),
+            true,
+        )
+        .unwrap();
+
+        assert_eq!(start.date_naive(), NaiveDate::from_ymd_opt(2026, 1, 11).unwrap());
+        assert_eq!(end.date_naive(), NaiveDate::from_ymd_opt(2026, 1, 11).unwrap());
+    }
+
+    #[test]
+    fn multi_day_all_day_event_gets_correct_inclusive_end() {
+        // A 2-day all-day event spanning 25-26 Dec is encoded as DTSTART=20261225,
+        // DTEND=20261227 (exclusive).
+        let start = to_local(
+            &DatePerhapsTime::Date(NaiveDate::from_ymd_opt(2026, 12, 25).unwrap()),
+            false,
+        )
+        .unwrap();
+        let end = to_local(
+            &DatePerhapsTime::Date(NaiveDate::from_ymd_opt(2026, 12, 27).unwrap()),
+            true,
+        )
+        .unwrap();
+
+        assert_eq!(start.date_naive(), NaiveDate::from_ymd_opt(2026, 12, 25).unwrap());
+        assert_eq!(end.date_naive(), NaiveDate::from_ymd_opt(2026, 12, 26).unwrap());
+    }
 }
